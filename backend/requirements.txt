@@ -4,7 +4,7 @@ uvicorn[standard]==0.32.0
 python-multipart==0.0.12
 
 # Database & ORM
-sqlalchemy==2.1.1
+sqlalchemy==2.0.23
 sqlalchemy-utils==0.41.2
 psycopg[binary]==3.20.1
 asyncpg==0.32.0

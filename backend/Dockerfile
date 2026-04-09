@@ -36,5 +36,5 @@ HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=15s \
 # Expose port
 EXPOSE 8000
 
-# Run FastAPI app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run FastAPI app using the src package
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
