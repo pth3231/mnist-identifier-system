@@ -1,5 +1,5 @@
 import pytest
-from app.models.schemas import UserCreate
+from src.app.models.schemas import UserCreate
 
 @pytest.mark.asyncio
 async def test_sign_up_success(client):

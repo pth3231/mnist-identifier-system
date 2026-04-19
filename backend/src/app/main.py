@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, predict
-from app.database import init_db
+
+from .routes import auth, predict
+from .database import init_db
 
 app = FastAPI(
     title="Japanese Character Identifier API",

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from typing import Optional
-from app.config import settings
+from ..config import settings
 
 class JapaneseCharacterClassifier(nn.Module):
     """Deep learning model for Japanese character classification"""
@@ -34,7 +34,7 @@ def load_model(model_path: str, num_classes: int = 3036, device: str = "cpu") ->
     """Load a trained model"""
     model = JapaneseCharacterClassifier(input_size=9216, num_classes=num_classes)
     try:
-        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
         model.eval()
     except FileNotFoundError:
         print(f"Warning: Model file not found at {model_path}. Using untrained model.")

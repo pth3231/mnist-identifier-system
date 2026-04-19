@@ -1,8 +1,7 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
-from app.ml.predictor import get_predictor
-from app.models.schemas import PredictionResponse, PredictionResult
-from app.security import verify_token
-import io
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Body
+from ..ml.predictor import get_predictor
+from ..models.schemas import PredictionResponse, PredictionResult
+from ..security import verify_token
 import numpy as np
 from PIL import Image
 
@@ -67,36 +66,41 @@ async def websocket_predict_endpoint(websocket: WebSocket, client_id: str):
         await websocket.close(code=status.WS_1011_SERVER_ERROR)
 
 @router.post("/predict", response_model=PredictionResponse)
-async def predict(canvas_data: bytes, token: dict = Depends(verify_token)):
+async def predict(
+    request: PredictionRequest = Body(...),
+    token: dict = Depends(verify_token)
+):
     """
     HTTP endpoint for single prediction.
-    
+
     Requires authentication token.
     """
+    canvas_data = request.canvas_data
+
     if not canvas_data or len(canvas_data) != 9216:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid canvas data. Expected 9216 bytes (96x96 grayscale image)"
         )
-    
+
     try:
         # Parse canvas data
         canvas_array = np.frombuffer(canvas_data, dtype=np.uint8)
         canvas_array = canvas_array.reshape(96, 96)
-        
+
         # Get predictions
         predictor = get_predictor()
         predictions = predictor.predict(canvas_array)
-        
-        return {
-            "predictions": [
+
+        return PredictionResponse(
+            predictions=[
                 PredictionResult(
                     character=pred["character"],
                     confidence=pred["confidence"]
                 )
                 for pred in predictions
             ]
-        }
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

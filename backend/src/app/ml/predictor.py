@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 from typing import Optional, List, Dict
-from app.ml.model import load_model
-from app.config import settings
+from .model import load_model
+from ..config import settings
 
 _predictor_instance: Optional['Predictor'] = None
 

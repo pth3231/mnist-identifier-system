@@ -1,38 +1,61 @@
-# Backend Architecture
+# Japanese Character Identifier - Backend
 
-This is the FastAPI backend for the Japanese Character Identifier application.
+FastAPI backend for the Japanese Character Identifier application with JWT authentication, PostgreSQL database, and PyTorch-based character recognition.
+
+## Quick Start
+
+```bash
+# From the backend directory
+
+# Option 1: Using pip (recommended for development)
+pip install -e ".[dev]"
+
+# Option 2: Using uv (faster alternative)
+uv pip install -e ".[dev]"
+
+# Set up environment
+cp .env.example .env
+# Edit .env with your configuration
+
+# Run the server
+uvicorn src.app.main:app --reload
+```
+
+The API will be available at `http://localhost:8000`
+- Swagger docs: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
 ## Project Structure
 
 ```
 backend/
-├── app/
-│   ├── __init__.py
-│   ├── main.py                 # FastAPI app setup
-│   ├── config.py              # Configuration settings
-│   ├── database.py            # Database setup and session management
-│   ├── security.py            # JWT and password utilities
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── user.py           # User SQLAlchemy model
-│   │   └── schemas.py        # Pydantic request/response schemas
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── auth.py           # Authentication endpoints (/sign-up, /sign-in)
-│   │   └── predict.py        # Prediction endpoints (HTTP & WebSocket)
-│   └── ml/
+├── src/
+│   └── app/
 │       ├── __init__.py
-│       ├── model.py          # PyTorch model definition
-│       └── predictor.py      # Model inference wrapper
+│       ├── main.py                 # FastAPI app setup & CORS
+│       ├── config.py              # Pydantic settings management
+│       ├── database.py            # Async SQLAlchemy setup
+│       ├── security.py            # JWT & password hashing
+│       ├── models/
+│       │   ├── __init__.py
+│       │   ├── user.py           # User ORM model
+│       │   └── schemas.py        # Pydantic schemas
+│       ├── routes/
+│       │   ├── __init__.py
+│       │   ├── auth.py           # Auth endpoints
+│       │   └── predict.py        # Prediction endpoints
+│       └── ml/
+│           ├── __init__.py
+│           ├── model.py          # PyTorch model
+│           └── predictor.py      # Inference wrapper
 ├── tests/
-│   ├── __init__.py
-│   ├── conftest.py           # pytest configuration
-│   ├── test_auth.py          # Authentication tests
-│   └── test_predict.py       # Prediction tests
-├── requirements.txt          # Python dependencies
-├── Dockerfile               # Docker container setup
-├── .env.example            # Environment variables template
-└── README.md               # Backend documentation
+│   ├── conftest.py               # pytest fixtures
+│   ├── test_auth.py
+│   └── test_predict.py
+├── pyproject.toml                # Package configuration
+├── .env.example                  # Environment template
+├── Dockerfile
+└── README.md
 ```
 
 ## Implemented Components
@@ -70,36 +93,99 @@ backend/
 - JWT token generation and verification
 - Bearer token authentication
 
-## Running the Backend
+## Installation and Running
 
-### Local Development
+### Prerequisites
 
+- Python 3.10 or higher
+- PostgreSQL 14+ (for production) or SQLite (for development/testing)
+
+### Step 1: Install Dependencies
+
+**Option A: Using pip (recommended)**
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your settings
-
-# Run development server
-uvicorn app.main:app --reload
+cd backend
+pip install -e ".[dev]"
 ```
 
-The API will be available at `http://localhost:8000`
-Swagger docs: `http://localhost:8000/docs`
+**Option B: Using requirements.txt**
+```bash
+pip install -r requirements.txt
+# For development: pip install -r requirements.txt && pip install pytest pytest-asyncio httpx aiosqlite
+```
 
-### Docker
+**Option C: Using uv (fast alternative)**
+```bash
+pip install uv
+uv pip install -e ".[dev]"
+```
+
+### Step 2: Configure Environment Variables
 
 ```bash
-# Build image
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env with your settings
+# Required settings:
+#   - DATABASE_URL: Your PostgreSQL connection string
+#   - SECRET_KEY: A secure random string for JWT
+#   - MODEL_PATH: Path to your trained PyTorch model
+```
+
+**Minimum .env configuration:**
+```env
+# Database (PostgreSQL)
+DATABASE_URL=postgresql://user:password@localhost:5432/japanese_identifier
+
+# Or for SQLite (development only)
+# DATABASE_URL=sqlite+aiosqlite:///./japanese_identifier.db
+
+# Security (generate a secure key: openssl rand -hex 32)
+SECRET_KEY=your-super-secret-key-change-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# ML Model
+MODEL_PATH=./models/japanese_classifier.pth
+
+# API
+FRONTEND_URL=http://localhost:3000
+```
+
+### Step 3: Run the Server
+
+**Development mode (with auto-reload):**
+```bash
+uvicorn src.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Production mode:**
+```bash
+uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+**Using the installed CLI:**
+```bash
+japanese-api  # Runs via entry point defined in pyproject.toml
+```
+
+### Docker Deployment
+
+```bash
+# Build the image
 docker build -t japanese-identifier-backend .
 
-# Run container
-docker run -p 8000:8000 \
-  -e DATABASE_URL="postgresql://..." \
+# Run with environment variables
+docker run -d \
+  --name japanese-api \
+  -p 8000:8000 \
+  -e DATABASE_URL="postgresql://user:password@host:5432/dbname" \
   -e SECRET_KEY="your-secret-key" \
   japanese-identifier-backend
+
+# Or using docker-compose (if available)
+docker-compose up -d
 ```
 
 ## API Endpoints
