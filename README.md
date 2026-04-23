@@ -1,4 +1,4 @@
-# Japanese Identifier
+# MNIST Identifier System
 
 A minimal full‑stack app that lets users draw Japanese characters, predicts the character with a PyTorch model, and shows confidence scores.
 

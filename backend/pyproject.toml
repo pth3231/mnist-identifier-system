@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project]
-name = "japanese-identifier-backend"
+name = "mnist-identifier-backend"
 version = "0.0.1"
 description = "Japanese Character Identifier API Backend"
 readme = "README.md"

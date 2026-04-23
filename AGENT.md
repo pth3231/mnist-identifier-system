@@ -1,4 +1,4 @@
-# Agent Instructions: Online Japanese Identifier
+# Agent Instructions: MNIST Identifier System
 
 ## Project Context
 
