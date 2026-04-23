@@ -161,3 +161,7 @@ Thumbs.db
 .cache
 .turbo
 tmp/
+
+# Training models and data
+unpack_etlcdb/
+ETL9G/
