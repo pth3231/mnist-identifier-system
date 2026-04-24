@@ -165,3 +165,6 @@ tmp/
 # Training models and data
 unpack_etlcdb/
 ETL9G/
+
+# Installed dataset
+data/

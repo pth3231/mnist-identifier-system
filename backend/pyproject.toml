@@ -8,7 +8,7 @@ where = ["src"]
 [project]
 name = "mnist-identifier-backend"
 version = "0.0.1"
-description = "Japanese Character Identifier API Backend"
+description = "Character Identifier API Backend"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -31,7 +31,8 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
 
     # ML
-    "torch>=2.0.0",
+    "torch",
+    "torchvision",
     "numpy>=1.24.0",
     "pillow>=10.0.0",
 
@@ -48,4 +49,4 @@ dev = [
 ]
 
 [project.scripts]
-japanese-api = "src.app.main:app"
+mnist-api = "src.app.main:app"
