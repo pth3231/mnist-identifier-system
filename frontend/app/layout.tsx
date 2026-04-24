@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Japanese Character Identifier',
-  description: 'Draw Japanese characters and get real-time identification',
+  title: 'MNIST Identifier',
+  description: 'Draw handwritten digits and get real-time identification',
 }
 
 export default function RootLayout({

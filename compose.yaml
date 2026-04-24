@@ -21,6 +21,31 @@ services:
     networks:
       - app-network
 
+  ml:
+    build:
+      context: ./backend/src/ml
+      dockerfile: Dockerfile
+    container_name: mnist-identifier-ml
+    restart: unless-stopped
+    environment:
+      ML_MODEL_PATH: /models/mnist_model.pth
+      ML_INPUT_SIZE: 784
+      ML_NUM_CLASSES: 10
+      PYTHONUNBUFFERED: 1
+      PYTHONDONTWRITEBYTECODE: 1
+    ports:
+      - "127.0.0.1:8001:8001"
+    volumes:
+      - ml_model_data:/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
@@ -32,9 +57,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      MODEL_PATH: ./models/japanese_classifier.pth
-      NUM_CLASSES: 3036
-      INPUT_SIZE: 9216
+      ML_SERVICE_URL: http://ml:8001
       FRONTEND_URL: ${FRONTEND_URL}
       PYTHONUNBUFFERED: 1
       PYTHONDONTWRITEBYTECODE: 1
@@ -42,6 +65,8 @@ services:
       - "127.0.0.1:8000:8000"
     depends_on:
       db:
+        condition: service_healthy
+      ml:
         condition: service_healthy
     volumes:
       - ./backend:/app
@@ -59,10 +84,8 @@ services:
 
   frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     container_name: mnist-identifier-frontend
     restart: unless-stopped
     ports:
@@ -84,6 +107,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  ml_model_data:
     driver: local
 
 networks:

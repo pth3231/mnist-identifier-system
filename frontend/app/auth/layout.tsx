@@ -11,9 +11,9 @@ export default function AuthLayout({
         {/* Logo/Title */}
         <div className="mb-8 text-center">
           <Link href="/">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Japanese Identifier</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">MNIST Identifier</h1>
           </Link>
-          <p className="text-sm text-muted-foreground">Learn and identify Japanese characters</p>
+          <p className="text-sm text-muted-foreground">Identify handwritten digits</p>
         </div>
 
         {/* Auth Card */}

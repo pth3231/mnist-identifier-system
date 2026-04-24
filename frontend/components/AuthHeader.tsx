@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { getUser, logout } from '@/lib/auth'
+import { getUser, logout } from '@/utils/auth'
 
 interface User {
   name?: string
