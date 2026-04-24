@@ -1,103 +1,38 @@
-# Japanese Character Identifier - Backend
+# MNIST Identifier - Backend
 
-FastAPI backend for the Japanese Character Identifier application with JWT authentication, PostgreSQL database, and PyTorch-based character recognition.
+FastAPI backend with JWT auth and PyTorch inference.
 
 ## Quick Start
 
 ```bash
-# From the backend directory
-
-# Option 1: Using pip (recommended for development)
 pip install -e ".[dev]"
-
-# Option 2: Using uv (faster alternative)
-uv pip install -e ".[dev]"
-
-# Set up environment
 cp .env.example .env
-# Edit .env with your configuration
-
-# Run the server
 uvicorn src.app.main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`
-- Swagger docs: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+API docs: `http://localhost:8000/docs`
 
-## Project Structure
+## Structure
 
 ```
-backend/
-├── src/
-│   └── app/
-│       ├── __init__.py
-│       ├── main.py                 # FastAPI app setup & CORS
-│       ├── config.py              # Pydantic settings management
-│       ├── database.py            # Async SQLAlchemy setup
-│       ├── security.py            # JWT & password hashing
-│       ├── models/
-│       │   ├── __init__.py
-│       │   ├── user.py           # User ORM model
-│       │   └── schemas.py        # Pydantic schemas
-│       ├── routes/
-│       │   ├── __init__.py
-│       │   ├── auth.py           # Auth endpoints
-│       │   └── predict.py        # Prediction endpoints
-│       └── ml/
-│           ├── __init__.py
-│           ├── model.py          # PyTorch model
-│           └── predictor.py      # Inference wrapper
-├── tests/
-│   ├── conftest.py               # pytest fixtures
-│   ├── test_auth.py
-│   └── test_predict.py
-├── pyproject.toml                # Package configuration
-├── .env.example                  # Environment template
-├── Dockerfile
-└── README.md
+app/
+├── main.py          # FastAPI app
+├── config.py        # Settings
+├── database.py      # Async SQLAlchemy
+├── security.py      # JWT & password hashing
+├── models/          # ORM & schemas
+└── routes/          # auth, predict
+tests/
 ```
 
-## Implemented Components
+## API Endpoints
 
-### Authentication (`app/routes/auth.py`)
-- **POST /api/auth/sign-up**: Register new user
-  - Validates: username (3-50 chars), email, password (6+ chars)
-  - Returns: User info with id, created_at
-  
-- **POST /api/auth/sign-in**: User login
-  - Returns: JWT access token + user info
-
-### Prediction (`app/routes/predict.py`)
-- **WebSocket /api/ws/predict/{client_id}**: Real-time streaming predictions
-  - Accepts: 96x96 grayscale image data (9216 bytes)
-  - Returns: Top 15 character predictions with confidence
-  
-- **POST /api/predict**: Single prediction (requires auth token)
-  - Returns: Prediction results
-
-### ML Model (`app/ml/`)
-- **JapaneseCharacterClassifier**: PyTorch model
-  - Input: 96x96 flattened grayscale image (9216 features)
-  - Output: 3036 class probabilities (ETL9G dataset)
-  - Architecture: 4 fully connected layers with dropout
-  
-- **Predictor**: Model inference wrapper with preprocessing
-
-### Database (`app/models/user.py`)
-- User model with username, email, password
-- Timestamps for tracking user lifecycle
-
-### Security (`app/security.py`)
-- Password hashing with bcrypt
-- JWT token generation and verification
-- Bearer token authentication
-
-## Installation and Running
-
-### Prerequisites
-
-- Python 3.10 or higher
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/auth/sign-up` | Register user |
+| POST | `/api/auth/sign-in` | Login, returns JWT |
+| WS | `/api/ws/predict/{id}` | Real-time prediction |
+| POST | `/api/predict` | Single prediction (auth required) |
 - PostgreSQL 14+ (for production) or SQLite (for development/testing)
 
 ### Step 1: Install Dependencies

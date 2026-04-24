@@ -1,30 +1,33 @@
 # MNIST Identifier System
 
-A minimal full‑stack app that lets users draw Japanese characters, predicts the character with a PyTorch model, and shows confidence scores.
+A full-stack app for drawing characters and predicting them with a PyTorch model.
 
-## Quick start (Docker)
+## Quick Start (Docker)
+
 ```bash
-docker compose up -d   # build and run all services
+docker compose up -d
 ```
 
-* **Backend** – FastAPI on `http://localhost:8000`
-* **Frontend** – Next.js on `http://localhost:3000`
-* **Database** – PostgreSQL (data persisted in `postgres_data` volume)
+- **Frontend** – Next.js on `http://localhost:3000`
+- **Backend** – FastAPI on `http://localhost:8000`
+- **ML Service** – PyTorch inference on `http://localhost:8001`
+- **Database** – PostgreSQL
 
 ## Development
-* Backend code lives in `backend/src`. Run with:
-```bash
-uvicorn src.main:app --reload
-```
-* Frontend code lives in the repo root. Start with:
-```bash
-npm run dev
-```
 
-## Tests
+| Service | Command |
+|---------|---------|
+| Backend | `cd backend && uvicorn src.main:app --reload` |
+| Frontend | `npm run dev` |
+
+## Testing
+
 ```bash
 docker compose exec backend pytest
 ```
 
-## License
-Creative Commons Attribution Non Commercial 4.0 International - CC-BY-NC-4.0
+## Architecture
+
+- `frontend/` – Next.js app
+- `backend/src/app/` – FastAPI app (auth, routes)
+- `backend/src/ml/` – PyTorch model & inference service

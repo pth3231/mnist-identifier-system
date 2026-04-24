@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.app.models.schemas import PredictionRequest
+from backend.app.models.schemas import PredictionRequest
 
 @pytest.mark.asyncio
 async def test_predict_invalid_data_size(client):

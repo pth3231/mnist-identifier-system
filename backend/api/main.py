@@ -1,7 +1,8 @@
+from .routes import auth
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import auth, predict
+from .routes import predict
 from .database import init_db
 
 app = FastAPI(
