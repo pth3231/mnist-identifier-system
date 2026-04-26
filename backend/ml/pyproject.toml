@@ -3,12 +3,12 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
 
 [project]
-name = "mnist-identifier-backend"
+name = "mnist-identifier-ml"
 version = "0.0.1"
-description = "Character Identifier API Backend"
+description = "Character Identifier ML"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -49,4 +49,4 @@ dev = [
 ]
 
 [project.scripts]
-mnist-api = "src.app.main:app"
+mnist-ml = "src.app.main:app"

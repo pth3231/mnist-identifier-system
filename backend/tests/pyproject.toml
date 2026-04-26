@@ -3,13 +3,13 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 
 [project]
-name = "mnist-identifier-api"
+name = "mnist-identifier-backend"
 version = "0.0.1"
-description = "Character Identifier API"
-
+description = "Character Identifier API Backend"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     # Web framework
@@ -30,6 +30,12 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
 
+    # ML
+    "torch",
+    "torchvision",
+    "numpy>=1.24.0",
+    "pillow>=10.0.0",
+
     # WebSocket (included with FastAPI)
     "websockets>=12.0",
 ]
@@ -43,4 +49,4 @@ dev = [
 ]
 
 [project.scripts]
-mnist-api = "main:app"
+mnist-api = "src.app.main:app"

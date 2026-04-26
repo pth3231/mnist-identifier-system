@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Body
 from mnist_identifier_ml import get_predictor
-from ..models.schemas import PredictionResponse, PredictionResult
-from ..security import verify_token
+from models.schemas import PredictionResponse, PredictionResult
+from security import verify_token
 import numpy as np
 from PIL import Image
 

@@ -2,7 +2,7 @@
 
 ## Project Context
 
-Build a web application that allows user to interact (draw a 96x96 canvas), export, and make possible suggestions based on the possibility that the language model return.
+Build a web application that allows user to interact (draw a 32x32 canvas), export, and make possible suggestions based on the possibility that the language model return.
 
 ## Project Architecture
 
@@ -12,7 +12,7 @@ Build a web application that allows user to interact (draw a 96x96 canvas), expo
 - writing part has a gray cross to align the writing
 - color palette: #212129, #323949, #3d3e51, #40445a, #4c5265
 - main page:
-  + canvas with 96x96
+  + canvas with size of 32x32
   + recommendation box
   + read-only box
   + export image into JPEG/PNG
@@ -26,8 +26,7 @@ Build a web application that allows user to interact (draw a 96x96 canvas), expo
 
 - PyTorch with GPU
 - use Deep Learning to train and check if performance is better
-- structure: Flatten(96, 96) 1-bit -> suitable hidden layer -> 3036 classes
-- dataset: etl9g, 96x96
+- dataset: mnist
 
 ### Flow
 

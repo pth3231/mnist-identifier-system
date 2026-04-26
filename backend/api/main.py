@@ -1,14 +1,23 @@
-from .routes import auth
+from contextlib import asynccontextmanager
+
+from routes import auth
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import predict
-from .database import init_db
+from utils.database import init_db
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_db()
+    yield
+    # Shutdown (if needed) - SQLAlchemy handled cleanup
 
 app = FastAPI(
-    title="Japanese Character Identifier API",
-    description="API for Japanese character recognition with WebSocket streaming",
-    version="1.0.0"
+    title="MNIST Character Identifier API",
+    description="API for MNIST character recognition with WebSocket streaming",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -20,18 +29,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize database
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
-
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(predict.router, prefix="/api", tags=["predict"])
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "message": "Japanese Character Identifier API"}
+    return {"status": "ok", "message": "MNIST Character Identifier API"}
 
 if __name__ == "__main__":
     import uvicorn

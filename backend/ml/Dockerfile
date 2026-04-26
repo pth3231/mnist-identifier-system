@@ -18,7 +18,7 @@ RUN pip install --upgrade pip setuptools && \
 
 RUN pip install -e .
 
-COPY mnist_model.pth /models/mnist_model.pth
+COPY mnist_model.pth weights/mnist_model_fp16.pth
 
 EXPOSE 8001
 

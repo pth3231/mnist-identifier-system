@@ -1,6 +1,8 @@
 services:
   db:
-    image: postgres:17-alpine3.20
+    build:
+      context: ./backend/postgres
+      dockerfile: Dockerfile
     container_name: mnist-identifier-db
     restart: unless-stopped
     environment:
@@ -63,11 +65,11 @@ services:
       PYTHONDONTWRITEBYTECODE: 1
     ports:
       - "127.0.0.1:8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
-      ml:
-        condition: service_healthy
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+    #   ml:
+    #     condition: service_healthy
     volumes:
       - ./backend:/app
       - /app/__pycache__
