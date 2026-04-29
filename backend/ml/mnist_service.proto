@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package mnistservice;
+
+option go_package = "github.com/pth3231/mnist-identifier-system/gateway/proto";
+option java_multiple_files = true;
+option java_package = "com.mnistidentifier.pb";
+option java_outer_classname = "MnistServiceProto";
+
+service MnistService {
+  rpc Predict(PredictionRequest) returns (PredictionResponse);
+  rpc Health(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message PredictionRequest {
+  // Flattened 28x28 or 96x96 grayscale image as bytes
+  // Can be 784 bytes (28x28) or 9216 bytes (96x96)
+  bytes image_data = 1;
+  
+  // Optional: original image dimensions for validation
+  // Default: 28x28 for 784 bytes, 96x96 for 9216 bytes
+  int32 image_width = 2;
+  int32 image_height = 3;
+}
+
+message Prediction {
+  // Predicted digit (0-9)
+  int32 digit = 1;
+  
+  // Confidence score (0.0 - 1.0)
+  float confidence = 2;
+}
+
+message PredictionResponse {
+  // List of top predictions, sorted by confidence (descending)
+  repeated Prediction predictions = 1;
+  
+  // Processing time in milliseconds
+  int64 processing_time_ms = 2;
+  
+  // Model version used for this prediction
+  string model_version = 3;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;
+  }
+  
+  ServingStatus status = 1;
+  string message = 2;
+  string model_version = 3;
+}

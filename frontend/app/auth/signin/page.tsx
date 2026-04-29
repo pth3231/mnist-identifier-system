@@ -34,11 +34,11 @@ export default function SignIn() {
       {/* Form */}
       <form action={handleSubmit} className="space-y-4">
         <FormInput
-          id="email"
-          name="email"
-          label="Email address"
-          type="email"
-          placeholder="you@example.com"
+          id="username"
+          name="username"
+          label="Username"
+          type="text"
+          placeholder="your_username"
         />
 
         <FormInput

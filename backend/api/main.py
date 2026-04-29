@@ -11,11 +11,11 @@ async def lifespan(app: FastAPI):
     # Startup
     await init_db()
     yield
-    # Shutdown (if needed) - SQLAlchemy handled cleanup
+    # Shutdown (if needed) - SQLAlchemy handles cleanup
 
 app = FastAPI(
     title="MNIST Character Identifier API",
-    description="API for MNIST character recognition with WebSocket streaming",
+    description="API for user authentication, database operations, and caching",
     version="1.0.0",
     lifespan=lifespan
 )

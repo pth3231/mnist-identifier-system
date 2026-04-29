@@ -4,26 +4,32 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getUser, logout } from '@/utils/auth'
-
-interface User {
-  name?: string
-  email: string
-}
+import type { User } from '@/utils/auth'
 
 export default function AuthHeader() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   useEffect(() => {
     setUser(getUser())
   }, [])
 
-  const handleLogout = () => {
-    logout()
-    setUser(null)
-    setIsOpen(false)
-    router.push('/')
+  const handleLogout = async () => {
+    if (isSigningOut) return
+    
+    setIsSigningOut(true)
+    try {
+      await logout()
+      setUser(null)
+      setIsOpen(false)
+      router.push('/auth/signin')
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      setIsSigningOut(false)
+    }
   }
 
   return (
@@ -35,7 +41,7 @@ export default function AuthHeader() {
             className="flex items-center gap-2 px-3 py-2 rounded-lg border border-muted hover:bg-muted/10 transition-all"
           >
             <span className="text-sm font-medium text-foreground">
-              {user.name || user.email.split('@')[0]}
+              {user.username || user.email.split('@')[0]}
             </span>
             <svg
               className={`w-4 h-4 text-muted-foreground transition-transform ${
@@ -53,13 +59,15 @@ export default function AuthHeader() {
           {isOpen && (
             <div className="absolute right-0 mt-2 w-48 rounded-lg border border-muted bg-card shadow-lg overflow-hidden z-50">
               <div className="p-3 border-b border-muted bg-muted/5">
-                <p className="text-sm font-medium text-foreground">{user.email}</p>
+                <p className="text-sm font-medium text-foreground">{user.username}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted/10 transition-all"
+                disabled={isSigningOut}
+                className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted/10 transition-all disabled:opacity-50"
               >
-                Sign out
+                {isSigningOut ? 'Signing out...' : 'Sign out'}
               </button>
             </div>
           )}

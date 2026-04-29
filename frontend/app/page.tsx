@@ -79,8 +79,8 @@ export default function Home() {
                 <DrawingCanvas
                   ref={drawingCanvasRef}
                   onPrediction={handlePrediction}
-                  width={96}
-                  height={96}
+                  width={32}
+                  height={32}
                 />
                 <button
                   onClick={handleExport}

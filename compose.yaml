@@ -3,7 +3,6 @@ services:
     build:
       context: ./backend/postgres
       dockerfile: Dockerfile
-    container_name: mnist-identifier-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -14,6 +13,8 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    depends_on:
+      - pgadmin
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -23,28 +24,83 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
   ml:
     build:
       context: ./backend/ml
       dockerfile: Dockerfile
-    container_name: mnist-identifier-ml
     restart: unless-stopped
     environment:
-      ML_MODEL_PATH: /models/mnist_model.pth
-      ML_INPUT_SIZE: 784
-      ML_NUM_CLASSES: 10
+      ML_MODEL_PATH: /models/mnist_trained/mnist_model_fp16.pth
+      ML_GRPC_PORT: "50051"
       PYTHONUNBUFFERED: 1
       PYTHONDONTWRITEBYTECODE: 1
     ports:
-      - "127.0.0.1:8001:8001"
-    volumes:
-      - ml_model_data:/models
+      - "127.0.0.1:50051:50051"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 50051), timeout=5)"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 30s
+    networks:
+      - app-network
+
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      ML_SERVICE_ADDR: ml:50051
+      GATEWAY_PORT: "8080"
+      REQUEST_TIMEOUT_MS: 5000
+      MAX_RETRIES: 2
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      ml:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - app-network
 
@@ -52,29 +108,26 @@ services:
     build:
       context: ./backend/api
       dockerfile: Dockerfile
-    container_name: mnist-identifier-api
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
       SECRET_KEY: ${SECRET_KEY}
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      ML_SERVICE_URL: http://ml:8001
       FRONTEND_URL: ${FRONTEND_URL}
       PYTHONUNBUFFERED: 1
       PYTHONDONTWRITEBYTECODE: 1
     ports:
       - "127.0.0.1:8000:8000"
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
-    #   ml:
-    #     condition: service_healthy
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend:/app
       - /app/__pycache__
-    command: >
-      sh -c "uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -88,16 +141,16 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: mnist-identifier-frontend
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: ${NODE_ENV}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-    depends_on:
-      api:
-        condition: service_healthy
+      NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL}
+    # depends_on:
+    #   api:
+    #     condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 10s
@@ -106,11 +159,23 @@ services:
       start_period: 15s
     networks:
       - app-network
+    
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
     driver: local
-  ml_model_data:
+  redis_data:
+    driver: local
+  rabbitmq_data:
     driver: local
 
 networks:

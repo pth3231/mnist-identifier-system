@@ -28,10 +28,10 @@ dependencies = [
 
     # Security
     "python-jose[cryptography]>=3.3.0",
-    "passlib[bcrypt]>=1.7.4",
+    "argon2-cffi",
 
-    # WebSocket (included with FastAPI)
-    "websockets>=12.0",
+    # Caching & session
+    "redis>=5.0.0",
 ]
 
 [project.optional-dependencies]
