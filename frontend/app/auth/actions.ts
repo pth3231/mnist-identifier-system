@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { setAuth, setToken, setUser, logout as clearAuth } from '@/utils/auth'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = process.env.BACKEND_API
 
 export interface AuthResult {
   success: boolean
@@ -39,8 +39,8 @@ export async function signInAction(formData: FormData): Promise<AuthResult> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username,
-        password,
+        username: username,
+        password: password,
       }),
     })
 

@@ -1,5 +1,6 @@
 services:
   db:
+    container_name: mnist-db
     build:
       context: ./backend/postgres
       dockerfile: Dockerfile
@@ -22,9 +23,10 @@ services:
       retries: 10
       start_period: 10s
     networks:
-      - app-network
+      - mnist-network
 
   redis:
+    container_name: mnist-redis
     image: redis:7-alpine
     restart: unless-stopped
     ports:
@@ -38,9 +40,10 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - app-network
+      - mnist-network
 
   rabbitmq:
+    container_name: mnist-rabbitmq
     image: rabbitmq:3-management-alpine
     restart: unless-stopped
     ports:
@@ -57,16 +60,17 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - app-network
+      - mnist-network
 
   ml:
+    container_name: mnist-ml
     build:
       context: ./backend/ml
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       ML_MODEL_PATH: /models/mnist_trained/mnist_model_fp16.pth
-      ML_GRPC_PORT: "50051"
+      ML_GRPC_PORT: 50051
       PYTHONUNBUFFERED: 1
       PYTHONDONTWRITEBYTECODE: 1
     ports:
@@ -78,66 +82,75 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - app-network
+      - mnist-network
 
   gateway:
+    container_name: mnist-gateway
     build:
       context: ./backend/gateway
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      ML_SERVICE_ADDR: ml:50051
-      GATEWAY_PORT: "8080"
-      REQUEST_TIMEOUT_MS: 5000
-      MAX_RETRIES: 2
-    ports:
-      - "127.0.0.1:8080:8080"
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      AUTH_URL: ${AUTH_URL}
+      GATEWAY_PORT: ${GATEWAY_PORT}
+      FRONTEND_URL: ${FRONTEND_URL}  
+      REDIS_URL: ${REDIS_URL}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT} 
     depends_on:
-      ml:
+      auth:
         condition: service_healthy
+      # ml
+      # rabbitmq
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${GATEWAY_PORT}/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
     networks:
-      - app-network
+      - mnist-network
 
-  api:
+  auth:
+    container_name: mnist-auth
     build:
-      context: ./backend/api
+      context: ./backend/auth
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      GATEWAY_URL: ${GATEWAY_URL}
       SECRET_KEY: ${SECRET_KEY}
-      ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      FRONTEND_URL: ${FRONTEND_URL}
-      PYTHONUNBUFFERED: 1
-      PYTHONDONTWRITEBYTECODE: 1
-    ports:
-      - "127.0.0.1:8000:8000"
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      AUTH_PORT: ${AUTH_PORT}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/__pycache__
+    ports:
+      - "${AUTH_PORT}:${AUTH_PORT}"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${AUTH_PORT}/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
     networks:
-      - app-network
+      - mnist-network
 
   frontend:
+    container_name: mnist-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -146,11 +159,10 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: ${NODE_ENV}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-      NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL}
-    # depends_on:
-    #   api:
-    #     condition: service_healthy
+      BACKEND_API: ${BACKEND_API}
+    depends_on:
+      gateway:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 10s
@@ -158,17 +170,17 @@ services:
       retries: 5
       start_period: 15s
     networks:
-      - app-network
+      - mnist-network
     
   pgadmin:
     image: dpage/pgadmin4
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
     networks:
-      - app-network
+      - mnist-network
 
 volumes:
   postgres_data:
@@ -179,5 +191,5 @@ volumes:
     driver: local
 
 networks:
-  app-network:
+  mnist-network:
     driver: bridge

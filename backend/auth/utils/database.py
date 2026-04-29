@@ -3,11 +3,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status, logger
+from fastapi import Depends
 
 from models.base import Base
 from models.user import User
-from utils.jwt_helper import verify_token
 from config import settings
 
 engine = create_async_engine(
@@ -74,43 +73,13 @@ async def find_user_by_email(email: str, db: AsyncSession) -> Optional[User]:
     return result.scalar_one_or_none()
 
 
-async def get_current_user(
-    payload: dict = Depends(verify_token),
+async def find_user_by_id(
+    user_id: int,
     db: AsyncSession = Depends(get_db)
-) -> User:
-    """Get current authenticated user from JWT token"""
-    user_id: str = payload.get("sub")
-    
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload"
-        )
-    
-    try:
-        user_id = int(user_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid user ID format"
-        )
+) -> Optional[User]:
+    """Get current authenticated user from user_id"""
     
     # Query user from database
     query = select(User).where(User.id == user_id)
     result = await db.execute(query)
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
-    
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is disabled"
-        )
-    
-    logger.debug(f"Current user retrieved: {user.username}")
-    return user
+    return result.scalar_one_or_none()

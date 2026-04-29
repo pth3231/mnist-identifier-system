@@ -1,12 +1,11 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
-import logging
 
 from models.user import User
 from models.schemas import UserCreate, UserLogin, UserResponse, TokenResponse
 from utils.jwt_helper import create_access_token
-from utils.redis_utils import set_user_cache
+from utils.models_converter import convert_user_to_response
 
 from utils.auth_helper import (
     hash_password,
@@ -14,26 +13,23 @@ from utils.auth_helper import (
 )
 
 from utils.database import (
+    find_user_by_id,
     get_db,
     find_user_by_username,
-    find_user_by_email,
-    get_current_user
+    find_user_by_email
 )
 
-
-logger = logging.getLogger(__name__)
 router = APIRouter()
-
 
 @router.post("/sign-up", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def sign_up(
-    user_data: UserCreate,
+    credentials: UserCreate,
     db: AsyncSession = Depends(get_db)
-):
+) -> User:
     """Sign up a new user"""
     
     # Check if username already exists
-    existed_user = await find_user_by_username(user_data.username, db)
+    existed_user = await find_user_by_username(credentials.username, db)
     
     if existed_user:
         raise HTTPException(
@@ -42,7 +38,7 @@ async def sign_up(
         )
     
     # Check if email already exists
-    existed_email = await find_user_by_email(user_data.email, db)
+    existed_email = await find_user_by_email(credentials.email, db)
     if existed_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -50,18 +46,16 @@ async def sign_up(
         )
     
     # Create new user
-    hashed_password = hash_password(user_data.password)
+    hashed_password = hash_password(credentials.password)
     new_user = User(
-        username=user_data.username,
-        email=user_data.email,
+        username=credentials.username,
+        email=credentials.email,
         password_hash=hashed_password
     )
     
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
-    
-    logger.info(f"New user created: {new_user.username} ({new_user.email})")
     
     return new_user
 
@@ -70,14 +64,13 @@ async def sign_up(
 async def sign_in(
     credentials: UserLogin,
     db: AsyncSession = Depends(get_db)
-):
+) -> TokenResponse:
     """Sign in a user and return access token"""
     
     # Find user by username
     user = await find_user_by_username(credentials.username, db)
     
     if not user or not verify_password(credentials.password, user.password_hash):
-        logger.warning(f"Failed sign-in attempt for username: {credentials.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"
@@ -94,26 +87,30 @@ async def sign_in(
         data={"sub": str(user.id), "username": user.username},
         expires_delta=timedelta(minutes=30)
     )
+
+    # Convert from User to UserResponse (exclude password hash)
+    user_response = convert_user_to_response(user)
     
-    # Cache user data for faster lookups
-    user_data = {
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "is_active": user.is_active
-    }
-    await set_user_cache(user.id, user_data, ttl=1800)  # 30 minutes
-    logger.info(f"User signed in: {user.username}")
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": user
-    }
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=user_response
+    )
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user: User = Depends(get_current_user)
-):
+    user_id: int,
+    db: AsyncSession = Depends(get_db)
+) -> UserResponse:
     """Get current authenticated user information"""
-    return current_user
+    user = await find_user_by_id(user_id, db)
+
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found or inactive"
+        )
+    
+    user_response = convert_user_to_response(user)
+    
+    return user_response
