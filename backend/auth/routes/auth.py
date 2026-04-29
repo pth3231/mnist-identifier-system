@@ -87,14 +87,11 @@ async def sign_in(
         data={"sub": str(user.id), "username": user.username},
         expires_delta=timedelta(minutes=30)
     )
-
-    # Convert from User to UserResponse (exclude password hash)
-    user_response = convert_user_to_response(user)
     
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        user=user_response
+        user=convert_user_to_response(user)
     )
 
 @router.get("/me", response_model=UserResponse)
@@ -111,6 +108,4 @@ async def get_current_user_info(
             detail="User not found or inactive"
         )
     
-    user_response = convert_user_to_response(user)
-    
-    return user_response
+    return convert_user_to_response(user)

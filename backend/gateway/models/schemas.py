@@ -25,3 +25,6 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+    
+class TokenPayload(BaseModel):
+    user_id: int = Field(alias="sub")
