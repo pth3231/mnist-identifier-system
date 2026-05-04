@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[project]
+name = "mnist-identifier-ml"
+version = "0.0.1"
+description = "Character Identifier ML"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # gRPC
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
+
+    # ML
+    "torch",
+    "torchvision",
+    "numpy>=1.24.0",
+    "pillow>=10.0.0",
+
+    # Logging
+    "python-logging>=2.4.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.25.0",
+    "aiosqlite>=0.19.0",
+]
+
+[project.scripts]
+mnist-ml = "src.app.main:app"

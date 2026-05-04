@@ -4,6 +4,8 @@
 .env.*.local
 .env.production.local
 .env.docker
+.env.*
+!.env.example
 
 # Dependencies
 node_modules/
@@ -93,7 +95,6 @@ ehthumbs.db
 Thumbs.db
 
 # Docker
-*.dockerignore
 docker-compose.override.yml
 
 # Database
@@ -161,3 +162,10 @@ Thumbs.db
 .cache
 .turbo
 tmp/
+
+# Training models and data
+unpack_etlcdb/
+ETL9G/
+
+# Installed dataset
+data/

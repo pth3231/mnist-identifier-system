@@ -5,9 +5,9 @@ from sqlalchemy.orm import sessionmaker
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from src.app.main import app
-from src.app.database import Base, get_db
-from src.app.models.schemas import UserCreate, UserLogin
+from backend.app.main import app
+from backend.app.database import Base, get_db
+from backend.app.models.schemas import UserCreate, UserLogin
 
 pytest_plugins = ("pytest_asyncio",)
 
